@@ -28,11 +28,17 @@ __luaver_verbose=0
 
 ###############################################################################
 # Set options
-while getopts ":yf" opt; do
-  case ${opt} in
-  y | f) shift 1 && force_choice="true" && choice="y" ;;
-  *) break ;;
+setopts=$(getopt -o "f,y" --long "force,yes" -n "luaver" -- "$@" 2>/dev/null)
+eval set -- "${setopts[@]}" 2>/dev/null
+while :; do
+  case $1 in
+  -y | -f | --force | --yes) force_choice="true" && choice="y" ;;
+  --)
+    shift 1
+    break
+    ;;
   esac
+  shift 1
 done
 ###############################################################################
 # Helper functions
@@ -781,6 +787,4 @@ luaver() {
   __luaver_exec_command cd "${__luaver_present_dir}"
 }
 
-[ -n "$1" ] && luaver "$@" || luaver help
-
-exit $?
+[ -z "$1" ] || luaver "$@"

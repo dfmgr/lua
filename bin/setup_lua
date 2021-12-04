@@ -57,32 +57,46 @@ main() {
   am_i_online --error || exit 1
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
+  local GITREPO="https://github.com/DhavalKapil/luaver"
   local LUAVER_HOME="${LUAVER_HOME:-$HOME/.local/share/misc/plugins/luaver}"
   local LUAROCKS_BIN="${LUAROCKS_BIN:-$HOME/.local/share/lua/luarocks/bin}"
   local PATH="$LUAROCKS_BIN:$PATH"
-  local GITREPO="https://github.com/DhavalKapil/luaver"
   local version="${lua_version:-5.4.3}"
+  local rversion="${rocks_version:-3.8.0}"
+  local jversion="${jit_version:-2.0.5}"
+  luaver_bin_file="$(lslink --raw ~/.local/bin/luaver)"
   export LUAVER_HOME LUAROCKS_BIN PATH
-  printf_blue "Initializing LUA Setup"
+  printf_cyan "Installing luaver to $LUAVER_HOME"
   [[ -d "$LUAVER_HOME/.git" ]] || rm -Rf "$LUAVER_HOME" &>/dev/null
-  # printf_green "Downloading luaver from $GITREPO"
-  # if [[ -d "$LUAVER_HOME/.git" ]]; then
-  #   git -C "$LUAVER_HOME" reset --hard origin/master &>/dev/null
-  #   git -C "$LUAVER_HOME" fetch origin &>/dev/null &&
-  #     git -C "$LUAVER_HOME" pull &>/dev/null &&
-  #     git -C "$LUAVER_HOME" reset --hard origin/master &>/dev/null &&
-  #     printf_blue "Downloaded luaver from $GITREPO" || printf_exit "Failed to download the repo" >&2
-  # elif git clone "$GITREPO" -q "$LUAVER_HOME" &>/dev/null; then
-  #   printf_blue "Downloaded luaver from $GITREPO"
-  # else
-  #   printf_exit "Failed to download the repo" >&2
-  # fi
-  printf_green "Installing luaver to $LUAVER_HOME"
+  printf_green "Downloading luaver from $GITREPO"
+  if [[ -d "$LUAVER_HOME/.git" ]]; then
+    git -C "$LUAVER_HOME" reset --hard origin/master &>/dev/null
+    git -C "$LUAVER_HOME" fetch origin &>/dev/null &&
+      git -C "$LUAVER_HOME" pull &>/dev/null &&
+      git -C "$LUAVER_HOME" reset --hard origin/master &>/dev/null &&
+      printf_blue "Downloaded luaver from $GITREPO" || printf_exit "Failed to download the repo" >&2
+  elif git clone "$GITREPO" -q "$LUAVER_HOME" &>/dev/null; then
+    printf_blue "Downloaded luaver from $GITREPO"
+  else
+    printf_exit "Failed to download the repo" >&2
+  fi
+  [[ -f "$luaver_bin_file" ]] && [[ -f "$LUAVER_HOME/luaver" ]] && cp -Rf "$luaver_bin_file" "$LUAVER_HOME/luaver"
   type luaver &>/dev/null &&
-    printf_green "Installing LUA $version" &&
+    printf_green "Installing lua version: $version" &&
     luaver -f install $version &>/dev/null &&
-    luaver -f install-luarocks 3.8.0 &>/dev/null &&
-    printf_green "Finished installing lua!" || printf_exit "Installation of lua has failed" >&2
+    luaver set-default $version &>/dev/null &&
+    luaver -f install-luarocks $rversion &>/dev/null &&
+    luaver install-luajit $jversion &>/dev/null &&
+    luaver set-default $version &>/dev/null || error=true
+  get_ver="$(luaver current | grep 'lua' | grep '^')"
+  get_rver="$(luaver set-default-luarocks 3.8.0 2>&1 | tr ' ' '\n' | grep '[0-9].[0-9]' | grep '^')"
+  if [[ -n "$get_ver" ]] && [[ -n "$get_rver" ]] && [[ -z "$error" ]]; then
+    printf_green "Finished installing lua! $get_ver"
+    exitCode=0
+  else
+    printf_exit "Installation of lua has failed" >&2
+    exitCode=1
+  fi
   return "${exitCode:-$?}"
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

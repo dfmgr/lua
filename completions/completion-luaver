@@ -26,7 +26,7 @@ _luaver() {
             ;;
         install-luajit)
             if [ -z "$_luaver_luajit_versions" ]; then
-                _luaver_luajit_versions=($(_luaver_download "http://luajit.org/download.html" | awk '/MD5 Checksums/,/<\/pre/ { print }' | sed -n -e 's/.*LuaJIT-\(.*\)\.tar\.gz.*/\1/gp'))
+                _luaver_luajit_versions=($(_luaver_download "http://luajit.org/download.html" | awk '/ Checksums/,/<\/pre/ { print }' | sed -n -e 's/.*LuaJIT-\(.*\)\.tar\.gz.*/\1/gp'))
             fi
             opts=(${_luaver_luajit_versions[@]})
             ;;
@@ -37,13 +37,13 @@ _luaver() {
             opts=(${_luaver_luarocks_versions[@]})
             ;;
         use | set-default | uninstall)
-            opts=($(luaver list | grep '[0-9].[0-9].[0-9]' | tr - ' ')) # UGLY HACK
+            opts=($(luaver list | grep '[0-9].[0-9].[0-9]' | grep -v '==' | tr - ' ')) # UGLY HACK
             ;;
         use-luajit | set-default-luajit | uninstall-luajit)
-            opts=($(luaver list-luajit | grep '[0-9].[0-9].[0-9]' | tr - ' ')) # UGLY HACK
+            opts=($(luaver list-luajit | grep '[0-9].[0-9].[0-9]' | grep -v '==' | awk '{print $1}' | tr - ' ')) # UGLY HACK
             ;;
         use-luarocks | set-default-luarocks | uninstall-luarocks)
-            opts=($(luaver list-luarocks | grep '[0-9].[0-9].[0-9]' | tr - ' ')) # UGLY HACK
+            opts=($(luaver list-luarocks | grep '[0-9].[0-9].[0-9]' | grep -v '==' | awk '{print $1}' | tr - ' ')) # UGLY HACK
             ;;
         esac
         ;;
