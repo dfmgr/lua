@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PROG="install_lua"
+USER="${SUDO_USER:-${USER}}"
+HOME="${USER_HOME:-${HOME}}"
+SRC_DIR="${BASH_SOURCE%/*}"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#set opts
+trap 'exitCode=${exitCode:-$?};[[ -d "$HOME/tmp/rvm_install" ]] && rm -Rf "$HOME/tmp/rvm_install" &>/dev/null' EXIT
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+##@Version       : 031520211551-git
+# @Author        : Jason Hempstead
+# @Contact       : jason@casjaysdev.com
+# @License       : WTFPL
+# @ReadME        : install_lua --help
+# @Copyright     : Copyright: (c) 2021 Jason Hempstead, CasjaysDev
+# @Created       : Monday, Mar 15, 2021 15:51 EDT
+# @File          : install_lua
+# @Description   : Ruby Version Manager installer
+# @TODO          :
+# @Other         :
+# @Resource      :
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main function file
+if [ -f "$SRC_DIR/functions.bash" ]; then
+  FUNCTIONS_DIR="$SRC_DIR"
+  . "$FUNCTIONS_DIR/functions.bash"
+elif [ -f "$HOME/.local/bin/functions.bash" ]; then
+  FUNCTIONS_DIR="$HOME/.local/bin"
+  . "$FUNCTIONS_DIR/functions.bash"
+else
+  printf "\t\t\033[0;31m%s \033[0m\n" "Couldn't source the functions file from $FUNCTIONS_DIR"
+  return 1
+fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# helper function
+__version() { app_version; }
+__help() {
+  app_help "Usage: install_lua  -  install_lua --version" \
+    "-v, --version          -  display version" \
+    "-h, --help             -  display help"
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main function
+main() {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # options
+  case $1 in
+  -v | --version) __version ;;
+  -h | --help) __help ;;
+  -s | --set) lua_version="$2" && shift 2 ;;
+  esac
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Required app check
+  cmd_exists --error bash curl git || exit 1
+  am_i_online --error || exit 1
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # begin main app
+  local LUAVER_HOME="${LUAVER_HOME:-$HOME/.local/share/misc/plugins/luaver}"
+  local LUAROCKS_BIN="${LUAROCKS_BIN:-$HOME/.local/share/lua/luarocks/bin}"
+  local PATH="$LUAROCKS_BIN:$PATH"
+  local GITREPO="https://github.com/DhavalKapil/luaver"
+  local version="${lua_version:-5.4.3}"
+  export LUAVER_HOME LUAROCKS_BIN PATH
+  printf_blue "Initializing LUA Setup"
+  [[ -d "$LUAVER_HOME/.git" ]] || rm -Rf "$LUAVER_HOME" &>/dev/null
+  printf_green "Downloading luaver from $GITREPO"
+  if [[ -d "$LUAVER_HOME/.git" ]]; then
+    git -C "$LUAVER_HOME" fetch origin && git -C "$LUAVER_HOME" reset --hard origin/master &&
+      printf_blue "Downloaded luaver from $GITREPO" || printf_exit "Failed to download the repo" >&2
+  elif git clone "$GITREPO" -q "$LUAVER_HOME" &>/dev/null; then
+    printf_blue "Downloaded luaver from $GITREPO"
+  else
+    printf_exit "Failed to download the repo" >&2
+  fi
+  printf_green "Installing luaver to $LUAVER_HOME"
+  cd "$LUAVER_HOME" && bash -c "$LUAVER_HOME/install.sh" &>/dev/null
+  [[ -f "$LUAVER_HOME/luaver" ]] && source "$LUAVER_HOME/luaver" &&
+    printf_green "Installing LUA $version" &&
+    luaver install $version &&
+    luaver install-luarocks 3.8.0 &&
+    printf_green "Finished installing lua!" || printf_exit "Installation of lua has failed" >&2
+  return "${exitCode:-$?}"
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# execute function
+main "$@"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+exit $?
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# end
