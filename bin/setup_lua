@@ -80,8 +80,8 @@ main() {
   printf_green "Installing luaver to $LUAVER_HOME"
   type luaver &>/dev/null &&
     printf_green "Installing LUA $version" &&
-    luaver install $version &&
-    luaver install-luarocks 3.8.0 &&
+    luaver install $version &>/dev/null &&
+    luaver install-luarocks 3.8.0 &>/dev/null &&
     printf_green "Finished installing lua!" || printf_exit "Installation of lua has failed" >&2
   return "${exitCode:-$?}"
 }
