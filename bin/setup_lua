@@ -67,7 +67,10 @@ main() {
   [[ -d "$LUAVER_HOME/.git" ]] || rm -Rf "$LUAVER_HOME" &>/dev/null
   printf_green "Downloading luaver from $GITREPO"
   if [[ -d "$LUAVER_HOME/.git" ]]; then
-    git -C "$LUAVER_HOME" fetch origin && git -C "$LUAVER_HOME" reset --hard origin/master &&
+    git -C "$LUAVER_HOME" reset --hard origin/master &>/dev/null
+    git -C "$LUAVER_HOME" fetch origin &>/dev/null &&
+      git -C "$LUAVER_HOME" pull &>/dev/null &&
+      git -C "$LUAVER_HOME" reset --hard origin/master &>/dev/null &&
       printf_blue "Downloaded luaver from $GITREPO" || printf_exit "Failed to download the repo" >&2
   elif git clone "$GITREPO" -q "$LUAVER_HOME" &>/dev/null; then
     printf_blue "Downloaded luaver from $GITREPO"
