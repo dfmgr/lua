@@ -78,6 +78,7 @@ main() {
       printf_blue "Downloaded luaver from $GITREPO" || printf_exit "Failed to download the repo" >&2
   elif git clone "$GITREPO" "$LUAVER_HOME" -q &>/dev/null; then
     printf_blue "Downloaded luaver from $GITREPO"
+    chmod 755 "$LUAVER_HOME/luaver"
   else
     printf_exit "Failed to download the repo" >&2
   fi
@@ -85,12 +86,12 @@ main() {
     ln -sf "$LUAVER_HOME/luaver" "$luaver_bin_file"
   fi
   if type luaver &>/dev/null; then
-    printf_green "Installing lua version: $version" &&
-      luaver -f install "$version" >>"$logFile" 2>"$logFile.err" &&
-      luaver set-default "$version" >>"$logFile" 2>"$logFile.err" &&
-      luaver -f install-luarocks "$rversion" >>"$logFile" 2>"$logFile.err" &&
-      luaver install-luajit "$jversion" >>"$logFile" 2>"$logFile.err" &&
-      luaver set-default "$version" >>"$logFile" 2>"$logFile.err" || error="true"
+    printf_green "Installing lua version: $version"
+    luaver -f install "$version" >>"$logFile" 2>>"$logFile.err" &&
+      luaver set-default "$version" >>"$logFile" 2>>"$logFile.err" &&
+      luaver -f install-luarocks "$rversion" >>"$logFile" 2>>"$logFile.err" &&
+      luaver install-luajit "$jversion" >>"$logFile" 2>>"$logFile.err" &&
+      luaver set-default "$version" >>"$logFile" 2>>"$logFile.err" || error="true"
     get_ver="$(luaver current | grep 'lua' | grep '^')"
     get_rver="$(luaver set-default-luarocks 3.8.0 2>&1 | tr ' ' '\n' | grep '[0-9].[0-9]' | grep '^')"
     if [ -n "$get_ver" ] && [ -n "$get_rver" ] && [ -z "$error" ]; then
